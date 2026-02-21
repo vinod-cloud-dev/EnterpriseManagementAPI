@@ -14,5 +14,6 @@ namespace Employee_proj.Data
         public DbSet<Employee> Employees => Set<Employee>();
         public DbSet<Product> Products { get; set; }
         public DbSet<Category> Categories { get; set; }
+        public DbSet<User> Users { get; set; }
     }
 }

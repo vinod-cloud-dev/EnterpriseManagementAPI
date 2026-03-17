@@ -2,6 +2,7 @@
 using Employee_proj.Models;
 using Employee_proj.Repository.Interfaces;
 using Employee_proj.Services.Interfaces;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Employee_proj.Services.Implementations
 {
@@ -9,11 +10,12 @@ namespace Employee_proj.Services.Implementations
     {
         private readonly IProductRepository _repo;
         private readonly IWebHostEnvironment _env;
-
-        public ProductService(IProductRepository repo, IWebHostEnvironment env)
+        private readonly IMemoryCache _cache;
+        public ProductService(IProductRepository repo, IWebHostEnvironment env, IMemoryCache cache)
         {
             _repo = repo;
             _env = env;
+            _cache = cache;
         }
 
         public async Task<Product> CreateAsync(ProductCreateDto dto)
@@ -42,21 +44,41 @@ namespace Employee_proj.Services.Implementations
                 Description = dto.Description,
                 ImageUrl = imagePath
             };
-
             await _repo.AddAsync(product);
+            _cache.Remove("product_list");
             return product;
         }
-
         public async Task<IEnumerable<Product>> GetAllAsync()
         {
-            return await _repo.GetAllAsync();
+            string cacheKey = "product_list";
+            if (!_cache.TryGetValue(cacheKey, out IEnumerable<Product>? products))
+            {
+                // Not in cache → get from database
+                products = await _repo.GetAllAsync();
+                // Store in cache for 5 minutes
+                _cache.Set(cacheKey, products, TimeSpan.FromMinutes(5));
+            }
+            return products ?? Enumerable.Empty<Product>();
         }
-
         public async Task<Product?> GetByIdAsync(int id)
         {
-            return await _repo.GetByIdAsync(id);
-        }
+            string cacheKey = $"product_{id}";
+            if (!_cache.TryGetValue(cacheKey, out Product? product))
+            {
+                Console.WriteLine("❌ Data coming from DATABASE");
 
+                product = await _repo.GetByIdAsync(id);
+                if (product != null)
+                {
+                    _cache.Set(cacheKey, product, TimeSpan.FromMinutes(5));
+                }
+            }
+            else
+            {
+                Console.WriteLine("✅ Data coming from CACHE");
+            }
+            return product;
+        }
         public async Task UpdateAsync(int id, ProductCreateDto dto)
         {
             var product = await _repo.GetByIdAsync(id);
@@ -82,11 +104,14 @@ namespace Employee_proj.Services.Implementations
             }
 
             await _repo.UpdateAsync(product);
+            _cache.Remove("product_list");
+            _cache.Remove($"product_{id}");
         }
-
         public async Task DeleteAsync(int id)
         {
             await _repo.DeleteAsync(id);
+            _cache.Remove("product_list");
+            _cache.Remove($"product_{id}");
         }
     }
 }

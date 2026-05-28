@@ -13,6 +13,7 @@ namespace Employee_proj.Models
         public string PasswordHash { get; set; }
 
         public string Role { get; set; } = "User";   // Default role
-
+                                                     // Navigation property
+        public Profile Profile { get; set; }
     }
 }

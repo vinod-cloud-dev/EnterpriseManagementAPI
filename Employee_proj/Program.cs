@@ -10,8 +10,25 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Employee_proj.Middleware;
+using Serilog;
+using Serilog.Events;
+using Serilog.Enrichers;
+using Hangfire;
+using Hangfire.MemoryStorage;
 
+// Configure Serilog FIRST
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Information()
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+    .Enrich.WithMachineName()
+    .Enrich.WithThreadId()
+    .WriteTo.Console()
+    .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day)
+    .CreateLogger();
+// Bangalore
 var builder = WebApplication.CreateBuilder(args);
+builder.Host.UseSerilog();
+
 // Add services to the container.
 //THIS IS TO CHECK GIT CONNECTED IT NOT
 builder.Services.AddControllers();
@@ -37,8 +54,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
-builder.Services.AddAuthorization();
+//FOR REDIS cache system
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = "localhost:6379";
+    options.InstanceName = "EmployeeApp_";
+});
 
+builder.Services.AddHangfire(config =>
+    config.UseMemoryStorage()); // for now (simple)
+
+builder.Services.AddHangfireServer();
+
+builder.Services.AddScoped<ICacheService, CacheService>();
+
+builder.Services.AddAuthorization();
 // Learn more about configuring Swagger/OpenAPI at 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -58,8 +88,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-app.UseHttpsRedirection();
+
 app.UseMiddleware<ExceptionMiddleware>();
+app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

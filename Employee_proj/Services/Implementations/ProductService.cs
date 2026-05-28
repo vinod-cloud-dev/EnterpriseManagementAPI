@@ -11,6 +11,8 @@ namespace Employee_proj.Services.Implementations
         private readonly IProductRepository _repo;
         private readonly IWebHostEnvironment _env;
         private readonly IMemoryCache _cache;
+        //we are using versioning way to handle the cache system for products in pagination
+        private const string CacheVersionKey = "product_cache_version";
         public ProductService(IProductRepository repo, IWebHostEnvironment env, IMemoryCache cache)
         {
             _repo = repo;
@@ -45,18 +47,31 @@ namespace Employee_proj.Services.Implementations
                 ImageUrl = imagePath
             };
             await _repo.AddAsync(product);
-            _cache.Remove("product_list");
+            int version = _cache.GetOrCreate(CacheVersionKey, e => 1);
+            _cache.Set(CacheVersionKey, version + 1);
             return product;
         }
-        public async Task<IEnumerable<Product>> GetAllAsync()
+        public async Task<IEnumerable<Product>> GetPagedAsync(int page, int pageSize)
         {
-            string cacheKey = "product_list";
+            // 1. Get current version (or create = 1)
+            int version = _cache.GetOrCreate(CacheVersionKey, entry => 1);
+            // 2. Build cache key using version
+            string cacheKey = $"product_list_v{version}_page_{page}_size_{pageSize}";
+            // 3. Try get from cache
             if (!_cache.TryGetValue(cacheKey, out IEnumerable<Product>? products))
             {
-                // Not in cache → get from database
-                products = await _repo.GetAllAsync();
-                // Store in cache for 5 minutes
-                _cache.Set(cacheKey, products, TimeSpan.FromMinutes(5));
+                Console.WriteLine("DB HIT");
+                products = await _repo.GetPagedAsync(page, pageSize);
+                var options = new MemoryCacheEntryOptions
+                {
+                    AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5),
+                    SlidingExpiration = TimeSpan.FromMinutes(2)
+                };
+                _cache.Set(cacheKey, products, options);
+            }
+            else
+            {
+                Console.WriteLine(" CACHE HIT");
             }
             return products ?? Enumerable.Empty<Product>();
         }
@@ -83,34 +98,31 @@ namespace Employee_proj.Services.Implementations
         {
             var product = await _repo.GetByIdAsync(id);
             if (product == null) throw new Exception("Product not found");
-
             product.ProductName = dto.ProductName;
             product.CategoryId = dto.CategoryId;
             product.Price = dto.Price;
             product.Description = dto.Description;
-
             if (dto.Image != null)
             {
                 var folder = Path.Combine(_env.WebRootPath, "images");
                 Directory.CreateDirectory(folder);
-
                 var fileName = Guid.NewGuid() + Path.GetExtension(dto.Image.FileName);
                 var path = Path.Combine(folder, fileName);
-
                 using var stream = new FileStream(path, FileMode.Create);
                 await dto.Image.CopyToAsync(stream);
-
                 product.ImageUrl = "/images/" + fileName;
             }
 
             await _repo.UpdateAsync(product);
-            _cache.Remove("product_list");
+            int version = _cache.GetOrCreate(CacheVersionKey, e => 1);
+            _cache.Set(CacheVersionKey, version + 1);
             _cache.Remove($"product_{id}");
         }
         public async Task DeleteAsync(int id)
         {
             await _repo.DeleteAsync(id);
-            _cache.Remove("product_list");
+            int version = _cache.GetOrCreate(CacheVersionKey, e => 1);
+            _cache.Set(CacheVersionKey, version + 1);
             _cache.Remove($"product_{id}");
         }
     }

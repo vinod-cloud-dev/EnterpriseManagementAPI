@@ -4,7 +4,7 @@ namespace Employee_proj.Repository.Interfaces
 {
     public interface IProductRepository
     {
-        Task<IEnumerable<Product>> GetAllAsync();
+        Task<IEnumerable<Product>> GetPagedAsync(int page, int pageSize);
         Task<Product?> GetByIdAsync(int id);
         Task AddAsync(Product product);
         Task UpdateAsync(Product product);

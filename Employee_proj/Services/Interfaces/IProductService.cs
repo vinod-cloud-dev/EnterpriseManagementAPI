@@ -6,7 +6,7 @@ namespace Employee_proj.Services.Interfaces
     public interface IProductService
     {
         Task<Product> CreateAsync(ProductCreateDto dto);
-        Task<IEnumerable<Product>> GetAllAsync();
+        Task<IEnumerable<Product>> GetPagedAsync(int page, int pageSize);
         Task<Product?> GetByIdAsync(int id);
         Task UpdateAsync(int id, ProductCreateDto dto);
         Task DeleteAsync(int id);

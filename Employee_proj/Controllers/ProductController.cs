@@ -23,9 +23,14 @@ namespace Employee_proj.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll()
+        public async Task<IActionResult> GetAll(int page = 1, int pageSize = 10)
         {
-            return Ok(await _service.GetAllAsync());
+            var products = await _service.GetPagedAsync(page, pageSize);
+
+            if (!products.Any())
+                return NotFound("No products found");
+
+            return Ok(products);
         }
         [HttpGet("{id}")]
         public async Task<IActionResult> Get(int id)

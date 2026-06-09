@@ -44,5 +44,10 @@ namespace Employee_proj.Repository.Implementations
                 await _context.SaveChangesAsync();
             }
         }
+
+        public Task<bool> CategoryExistsAsync(int categoryId)
+        {
+            return _context.Categories.AnyAsync(c=>c.Id== categoryId);
+        }
     }
 }

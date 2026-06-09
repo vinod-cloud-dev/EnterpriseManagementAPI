@@ -1,5 +1,6 @@
 ﻿using Employee_proj.DTOs.Category;
 using Employee_proj.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,6 +18,7 @@ namespace Employee_proj.Controllers
         }
 
         [HttpPost]
+        [Authorize]
         public async Task<IActionResult> Create(CategoryCreateDto dto)
         {
             var category = await _service.CreateAsync(dto);

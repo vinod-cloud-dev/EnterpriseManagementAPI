@@ -18,6 +18,9 @@ namespace Employee_proj.Controllers
         [HttpPost]
         public async Task<IActionResult> Create([FromForm] ProductCreateDto dto)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var product = await _service.CreateAsync(dto);
             return Ok(product);
         }

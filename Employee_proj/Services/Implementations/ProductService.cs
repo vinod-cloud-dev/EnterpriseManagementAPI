@@ -1,7 +1,9 @@
 ﻿using Employee_proj.DTOs.Product;
+using Employee_proj.Jobs;
 using Employee_proj.Models;
 using Employee_proj.Repository.Interfaces;
 using Employee_proj.Services.Interfaces;
+using Hangfire;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace Employee_proj.Services.Implementations
@@ -11,17 +13,27 @@ namespace Employee_proj.Services.Implementations
         private readonly IProductRepository _repo;
         private readonly IWebHostEnvironment _env;
         private readonly IMemoryCache _cache;
+        private readonly IBackgroundJobClient _backgroundJobClient;
+        private readonly IEmailService _emailService;
         //we are using versioning way to handle the cache system for products in pagination
         private const string CacheVersionKey = "product_cache_version";
-        public ProductService(IProductRepository repo, IWebHostEnvironment env, IMemoryCache cache)
+        public ProductService(IProductRepository repo, IWebHostEnvironment env, IMemoryCache cache, IBackgroundJobClient backgroundJobClient, IEmailService emailService)
         {
             _repo = repo;
             _env = env;
             _cache = cache;
+            _backgroundJobClient = backgroundJobClient;
+            _emailService = emailService;
         }
 
         public async Task<Product> CreateAsync(ProductCreateDto dto)
         {
+            if (!await _repo.CategoryExistsAsync(dto.CategoryId))
+            {
+                throw new KeyNotFoundException(
+                    $"Category with Id {dto.CategoryId} does not exist.");
+            }
+
             string? imagePath = null;
 
             if (dto.Image != null)
@@ -47,9 +59,12 @@ namespace Employee_proj.Services.Implementations
                 ImageUrl = imagePath
             };
             await _repo.AddAsync(product);
+            _backgroundJobClient.Enqueue<ProductCreatedJob>(x => x.Handle(product.Id));
+            _backgroundJobClient.Enqueue<IEmailService>( x => x.SendEmailAsync( "vinodpkoti.35@gmail.com", "New Product Created", $"Product {dto.ProductName} has been created"));
             int version = _cache.GetOrCreate(CacheVersionKey, e => 1);
             _cache.Set(CacheVersionKey, version + 1);
             return product;
+
         }
         public async Task<IEnumerable<Product>> GetPagedAsync(int page, int pageSize)
         {

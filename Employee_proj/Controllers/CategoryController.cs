@@ -16,7 +16,6 @@ namespace Employee_proj.Controllers
         {
             _service = service;
         }
-
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> Create(CategoryCreateDto dto)

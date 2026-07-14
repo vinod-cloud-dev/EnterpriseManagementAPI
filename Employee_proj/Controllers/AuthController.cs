@@ -29,7 +29,13 @@ namespace Employee_proj.Controllers
                     message = "Email already exists"
                 });
             }
-
+            if(result == "2")
+            {
+                return Conflict(new
+                {
+                    message = "Username already exists"
+                });
+            }
             return StatusCode(201, new
             {
                 message = result

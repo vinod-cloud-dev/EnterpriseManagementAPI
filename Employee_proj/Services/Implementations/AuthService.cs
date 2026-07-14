@@ -25,21 +25,20 @@ namespace Employee_proj.Services.Implementations
 
         public async Task<string?> RegisterAsync(RegisterDto dto)
         {
-            var existingUser = await _userRepo.GetByEmailAsync(dto.Email.ToLower());
-            if (existingUser != null)
-                return null; // Email already exists
-
+            var existingUserEmail = await _userRepo.GetByEmailAsync(dto.Email.ToLower());
+            if (existingUserEmail != null)
+                return null;
+            var exitingUserName = await _userRepo.GetByUserNamelAsync(dto.Username.ToLower());
+            if (exitingUserName != null)
+                return "2";
             var user = new User
             {
                 Username = dto.Username,
                 Email = dto.Email,
                 Role = "User"
             };
-
             user.PasswordHash = _hasher.HashPassword(user, dto.Password);
-
             await _userRepo.AddAsync(user);
-
             return "User registered successfully";
         }
 
@@ -47,11 +46,9 @@ namespace Employee_proj.Services.Implementations
         {
             var user = await _userRepo.GetByEmailAsync(dto.Email);
             if (user == null) return null;
-
             var result = _hasher.VerifyHashedPassword(user, user.PasswordHash, dto.Password);
             if (result == PasswordVerificationResult.Failed)
                 return null;
-
             return GenerateToken(user);
         }
         private string GenerateToken(User user)
@@ -64,16 +61,13 @@ namespace Employee_proj.Services.Implementations
 
             var key = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
-
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
             var token = new JwtSecurityToken(
                 issuer: _configuration["Jwt:Issuer"],
                 audience: _configuration["Jwt:Audience"],
                 claims: claims,
                 expires: DateTime.Now.AddMinutes(60),
                 signingCredentials: creds);
-
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 

@@ -123,6 +123,20 @@ builder.Services.AddScoped<ProductJobService>();
 builder.Services.AddScoped<ProductCreatedJob>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddMemoryCache();
+
+
+
+
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("ReactPolicy", policy =>
+    {
+        policy.WithOrigins("http://localhost:5173")
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
 var app = builder.Build();
 
 //Hangfire Recurring JOB 
@@ -145,6 +159,8 @@ if (app.Environment.IsDevelopment())
 
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseHttpsRedirection();
+app.UseStaticFiles();
+app.UseCors("ReactPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseHangfireDashboard();

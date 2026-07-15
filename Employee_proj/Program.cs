@@ -153,7 +153,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-//FOR BRANCH PRACTICE
+//FOR BRANCH PRACTICEv- DONE WITH THE CHNAGES 
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseHttpsRedirection();
 app.UseStaticFiles();

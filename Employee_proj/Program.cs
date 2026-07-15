@@ -111,7 +111,6 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-
 builder.Services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IProductService, ProductService>();             
@@ -124,10 +123,6 @@ builder.Services.AddScoped<ProductCreatedJob>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddMemoryCache();
 
-
-
-
-
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactPolicy", policy =>
@@ -137,6 +132,8 @@ builder.Services.AddCors(options =>
               .AllowAnyMethod();
     });
 });
+
+
 var app = builder.Build();
 
 //Hangfire Recurring JOB 
@@ -156,7 +153,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+//FOR BRANCH PRACTICEv- DONE WITH THE CHNAGES 
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseHttpsRedirection();
 app.UseStaticFiles();

@@ -2,6 +2,7 @@
 using Employee_proj.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Employee_proj.Controllers
 {
@@ -28,11 +29,13 @@ namespace Employee_proj.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAll(int page = 1, int pageSize = 10)
         {
-            var products = await _service.GetPagedAsync(page, pageSize);
 
+            var username = User.Identity.Name;
+            var email = User.FindFirst(ClaimTypes.Email)?.Value;
+            var id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var products = await _service.GetPagedAsync(page, pageSize);
             if (!products.Any())
                 return NotFound("No products found");
-
             return Ok(products);
         }
         [HttpGet("{id}")]

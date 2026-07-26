@@ -124,10 +124,6 @@ builder.Services.AddScoped<ProductCreatedJob>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddMemoryCache();
 
-
-
-
-
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactPolicy", policy =>

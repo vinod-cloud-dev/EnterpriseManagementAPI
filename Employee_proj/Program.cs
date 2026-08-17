@@ -18,6 +18,7 @@ using Hangfire.SqlServer;
 using Employee_proj.Services;
 using Microsoft.OpenApi.Models;
 using Employee_proj.Jobs;
+using Azure.Identity;
 //using Hangfire.MemoryStorage;
 
 // Configure Serilog FIRST
@@ -32,6 +33,15 @@ Log.Logger = new LoggerConfiguration()
 // Bangalore
 var builder = WebApplication.CreateBuilder(args);
 builder.Host.UseSerilog();
+
+//Key valut configuration
+var keyVaultName = builder.Configuration["KeyVault:Name"];
+if (!string.IsNullOrEmpty(keyVaultName))
+{
+    builder.Configuration.AddAzureKeyVault(
+        new Uri($"https://{keyVaultName}.vault.azure.net/"),
+        new DefaultAzureCredential());
+}
 
 // Add services to the container.
 //THIS IS TO CHECK GIT CONNECTED IT NOT
@@ -70,8 +80,8 @@ builder.Services.AddHangfireServer();
 //FOR REDIS cache system
 builder.Services.AddStackExchangeRedisCache(options =>
 {
-    options.Configuration = "localhost:6379";
-    options.InstanceName = "EmployeeApp_";
+    options.Configuration = builder.Configuration["Redis:ConnectionString"];
+    options.InstanceName = builder.Configuration["Redis:InstanceName"];
 });
 
 // Registers the ICacheService interface with its implementation CacheService in the dependency injection container.

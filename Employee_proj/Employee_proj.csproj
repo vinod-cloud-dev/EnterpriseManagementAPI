@@ -10,6 +10,8 @@
     <None Remove="Repository\Interfaces\IProductRepository.cs~RF6af39da.TMP" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.5.1" />
+    <PackageReference Include="Azure.Identity" Version="1.21.0" />
     <PackageReference Include="Hangfire" Version="1.8.23" />
     <PackageReference Include="Hangfire.AspNetCore" Version="1.8.23" />
     <PackageReference Include="Hangfire.MemoryStorage" Version="1.8.1.2" />

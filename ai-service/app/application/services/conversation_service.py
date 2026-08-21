@@ -4,7 +4,9 @@ from app.application.interfaces.conversation_memory import (
 )
 from app.application.interfaces.llm import LLMInterface
 from app.domain.models.conversation_message import ConversationMessage
-
+from app.application.interfaces.context_builder import (
+    ContextBuilderInterface,
+)
 
 class ConversationService:
 
@@ -12,9 +14,12 @@ class ConversationService:
         self,
         llm: LLMInterface,
         memory: ConversationMemoryInterface,
+        context_builder: ContextBuilderInterface,
+
     ) -> None:
         self._llm = llm
         self._memory = memory
+        self._context_builder = context_builder
 
     async def chat(
         self,
@@ -26,7 +31,7 @@ class ConversationService:
             conversation_id
         )
 
-        prompt = self._build_prompt(
+        prompt = self._context_builder.build(
             history,
             message,
         )
@@ -53,19 +58,4 @@ class ConversationService:
 
         return response
 
-    @staticmethod
-    def _build_prompt(
-        history: list[ConversationMessage],
-        current_message: str,
-    ) -> str:
-
-        conversation = "\n".join(
-            f"{message.role}: {message.content}"
-            for message in history
-        )
-
-        return (
-            f"{conversation}\n"
-            f"user: {current_message}\n"
-            f"assistant:"
-        )
+   

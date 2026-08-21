@@ -7,6 +7,10 @@ from app.domain.models.conversation_message import ConversationMessage
 from app.application.interfaces.context_builder import (
     ContextBuilderInterface,
 )
+from app.api.dependencies.context_builder import get_context_builder
+from app.application.interfaces.context_builder import (
+    ContextBuilderInterface,
+)
 
 class ConversationService:
 

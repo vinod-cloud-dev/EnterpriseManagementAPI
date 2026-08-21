@@ -19,6 +19,7 @@ using Employee_proj.Services;
 using Microsoft.OpenApi.Models;
 using Employee_proj.Jobs;
 //using Hangfire.MemoryStorage;
+//FOR AI INtegration PUSH
 
 // Configure Serilog FIRST
 Log.Logger = new LoggerConfiguration()

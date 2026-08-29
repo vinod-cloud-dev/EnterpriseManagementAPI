@@ -12,7 +12,6 @@ app.add_middleware(RequestIDMiddleware)
 app.include_router(api_router)
 register_exception_handlers(app)
 
-
 @app.get("/")
 async def root():
     return {"message": "Employee AI Service is running"}

@@ -1,16 +1,9 @@
-from uuid import UUID
-from app.application.interfaces.conversation_memory import (
-    ConversationMemoryInterface,
-)
+from uuid import UUID, uuid4
+from app.application.interfaces.conversation_memory import (ConversationMemoryInterface,)
 from app.application.interfaces.llm import LLMInterface
-from app.domain.models.conversation_message import ConversationMessage
-from app.application.interfaces.context_builder import (
-    ContextBuilderInterface,
-)
-from app.api.dependencies.context_builder import get_context_builder
-from app.application.interfaces.context_builder import (
-    ContextBuilderInterface,
-)
+from app.domain.models.conversation_message import ConversationMessage 
+from app.application.interfaces.context_builder import (ContextBuilderInterface,)
+from datetime import datetime, timezone
 
 class ConversationService:
 
@@ -19,7 +12,6 @@ class ConversationService:
         llm: LLMInterface,
         memory: ConversationMemoryInterface,
         context_builder: ContextBuilderInterface,
-
     ) -> None:
         self._llm = llm
         self._memory = memory
@@ -42,24 +34,28 @@ class ConversationService:
 
         response = await self._llm.generate(prompt)
 
+        next_sequence = len(history) + 1
+
         await self._memory.add_message(
             ConversationMessage(
+                id=uuid4(),
                 conversation_id=conversation_id,
                 role="user",
                 content=message,
-                created_at=__import__("datetime").datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
+                sequence_number=next_sequence,
             )
         )
 
         await self._memory.add_message(
             ConversationMessage(
+                id=uuid4(),
                 conversation_id=conversation_id,
                 role="assistant",
                 content=response,
-                created_at=__import__("datetime").datetime.utcnow(),
+                created_at=datetime.now(timezone.utc),
+                sequence_number=next_sequence + 1,
             )
         )
 
         return response
-
-   

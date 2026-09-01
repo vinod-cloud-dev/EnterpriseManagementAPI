@@ -5,7 +5,7 @@ from uuid import UUID
 @dataclass(frozen=True)
 class Conversation:
     id: UUID
-    user_id: UUID
+    user_id: int
     user_email: str
     title: str | None
     created_at: datetime

@@ -21,6 +21,9 @@ class Settings:
     postgres_user: str = os.getenv("POSTGRES_USER", "ai_user")
     postgres_password: str = os.getenv("POSTGRES_PASSWORD", "")
     postgres_db: str = os.getenv("POSTGRES_DB", "employee_ai")
+    jwt_secret_key: str = os.getenv("JWT_SECRET_KEY", "")
+    jwt_issuer: str = os.getenv("JWT_ISSUER", "Employee_Proj")
+    jwt_audience: str = os.getenv("JWT_AUDIENCE", "EmployeeAPIUsers")
 @lru_cache
 def get_settings() -> Settings:
     return Settings()

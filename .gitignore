@@ -370,3 +370,10 @@ env/
 #Ignore These files for Python projects
 __pycache__/
 *.py[cod]
+
+
+
+# Environment variables / secrets
+.env
+.env.*
+!.env.example

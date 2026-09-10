@@ -1,5 +1,8 @@
-from app.application.interfaces.context_builder import (ContextBuilderInterface,)
+from app.application.interfaces.context_builder import (
+    ContextBuilderInterface,
+)
 from app.domain.models.conversation_message import ConversationMessage
+
 
 class ContextBuilder(ContextBuilderInterface):
 
@@ -7,15 +10,24 @@ class ContextBuilder(ContextBuilderInterface):
         self,
         history: list[ConversationMessage],
         current_message: str,
+        summary: str | None = None,
     ) -> str:
 
-        conversation = "\n".join(
-            f"{message.role}: {message.content}"
-            for message in history
-        )
+        parts: list[str] = []
 
-        return (
-            f"{conversation}\n"
-            f"user: {current_message}\n"
-            f"assistant:"
-        )
+        if summary:
+            parts.append(
+                f"conversation summary:\n{summary}"
+            )
+
+        if history:
+            conversation = "\n".join(
+                f"{message.role}: {message.content}"
+                for message in history
+            )
+            parts.append(conversation)
+
+        parts.append(f"user: {current_message}")
+        parts.append("assistant:")
+
+        return "\n".join(parts)

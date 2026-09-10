@@ -24,6 +24,8 @@ class Settings:
     jwt_secret_key: str = os.getenv("JWT_SECRET_KEY", "")
     jwt_issuer: str = os.getenv("JWT_ISSUER", "Employee_Proj")
     jwt_audience: str = os.getenv("JWT_AUDIENCE", "EmployeeAPIUsers")
+    llm_context_window: int = int(os.getenv("LLM_CONTEXT_WINDOW", "8192"))
+    llm_max_output_tokens: int = int(os.getenv("LLM_MAX_OUTPUT_TOKENS", "1500"))
 @lru_cache
 def get_settings() -> Settings:
     return Settings()

@@ -2,7 +2,9 @@ from uuid import UUID, uuid4
 from app.application.interfaces.conversation_memory import (ConversationMemoryInterface,)
 from app.application.interfaces.llm import LLMInterface
 from app.domain.models.conversation_message import ConversationMessage 
-from app.application.interfaces.context_builder import (ContextBuilderInterface,)
+
+#Moving from Context Builder to Context Manager
+# from app.application.interfaces.context_builder import (ContextBuilderInterface,)
 from datetime import datetime, timezone
 from app.application.interfaces.conversation_repository import (
     ConversationRepositoryInterface,
@@ -10,6 +12,11 @@ from app.application.interfaces.conversation_repository import (
 # from app.application.exceptions.exceptions import (
 #     ConversationAccessDeniedError,
 # )
+
+from app.application.interfaces.context_manager import (
+    ContextManagerInterface,
+)
+
 from app.application.exceptions.base import ConversationAccessDeniedError
 class ConversationService:
 
@@ -18,12 +25,12 @@ class ConversationService:
         llm: LLMInterface,
         memory: ConversationMemoryInterface,
         repository: ConversationRepositoryInterface,
-        context_builder: ContextBuilderInterface,
+        context_manager: ContextManagerInterface,
     ) -> None:
         self._llm = llm
         self._memory = memory
         self._repository = repository
-        self._context_builder = context_builder
+        self._context_manager = context_manager
 
     async def chat(
             self,
@@ -70,11 +77,11 @@ class ConversationService:
                 await self._memory.add_message(history_message)
 
             # 5. Build prompt
-            prompt = self._context_builder.build(
+            prompt = await self._context_manager.build_context(
+                conversation_id,
                 history,
                 message,
             )
-            
             print("\n========== PROMPT ==========")
             print(prompt)
             print("============================\n")

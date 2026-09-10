@@ -1,13 +1,11 @@
 from abc import ABC, abstractmethod
 from app.domain.models.conversation_message import ConversationMessage
 
-class ContextBuilderInterface(ABC):
-
+class ConversationSummarizerInterface(ABC):
     @abstractmethod
-    def build(
+    async def summarize(
         self,
-        history: list[ConversationMessage],
-        current_message: str,
-        summary: str | None = None,
+        existing_summary: str | None,
+        messages: list[ConversationMessage],
     ) -> str:
         pass

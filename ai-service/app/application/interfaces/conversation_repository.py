@@ -1,11 +1,9 @@
 from abc import ABC, abstractmethod
 from uuid import UUID
-
+from app.domain.models.conversation_summary import ConversationSummary
 from app.domain.models.conversation_message import ConversationMessage
 
-
 class ConversationRepositoryInterface(ABC):
-
     @abstractmethod
     async def save_message(
         self,
@@ -36,11 +34,24 @@ class ConversationRepositoryInterface(ABC):
     ) -> bool:
         pass
     
-    
-    
     @abstractmethod
     async def get_conversation_owner(
         self,
         conversation_id: UUID,
     ) -> int | None:
+        pass
+    
+    @abstractmethod
+    async def get_summary(
+        self,
+        conversation_id: UUID,
+    ) -> ConversationSummary | None:
+        pass
+
+
+    @abstractmethod
+    async def save_summary(
+        self,
+        summary: ConversationSummary,
+    ) -> None:
         pass

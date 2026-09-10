@@ -13,7 +13,9 @@ from app.infrastructure.database.models.conversation import Conversation
 from app.infrastructure.database.models.conversation_message import (
     ConversationMessage,
 )
-
+from app.infrastructure.database.models.conversation_summary import (
+    ConversationSummary,
+)
 
 # ---------------------------------------------------------
 # Alembic Config

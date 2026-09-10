@@ -11,6 +11,13 @@ from app.domain.models.conversation_message import (
 from app.infrastructure.database.models.conversation_message import (
     ConversationMessage as ConversationMessageModel,
 )
+from app.domain.models.conversation_summary import (
+    ConversationSummary as DomainConversationSummary,
+)
+
+from app.infrastructure.database.models.conversation_summary import (
+    ConversationSummary as ConversationSummaryModel,
+)
 from app.infrastructure.database.models.conversation import Conversation
 
 class ConversationRepository(ConversationRepositoryInterface):
@@ -120,3 +127,63 @@ class ConversationRepository(ConversationRepositoryInterface):
             )
         )
         return result.scalar_one_or_none()
+    
+    async def get_summary(
+            self,
+            conversation_id: UUID,
+        ) -> DomainConversationSummary | None:
+
+            result = await self._session.execute(
+                select(ConversationSummaryModel)
+                .where(
+                    ConversationSummaryModel.conversation_id
+                    == conversation_id
+                )
+            )
+
+            db_summary = result.scalar_one_or_none()
+
+            if db_summary is None:
+                return None
+
+            return DomainConversationSummary(
+                conversation_id=db_summary.conversation_id,
+                summary=db_summary.summary,
+                summarized_until_sequence=db_summary.summarized_until_sequence,
+                created_at=db_summary.created_at,
+                updated_at=db_summary.updated_at,
+            )
+            
+            
+            
+    async def save_summary(
+            self,
+            summary: DomainConversationSummary,
+        ) -> None:
+
+            existing_summary = await self._session.get(
+                ConversationSummaryModel,
+                summary.conversation_id,
+            )
+
+            if existing_summary is None:
+
+                db_summary = ConversationSummaryModel(
+                    conversation_id=summary.conversation_id,
+                    summary=summary.summary,
+                    summarized_until_sequence=summary.summarized_until_sequence,
+                    created_at=summary.created_at,
+                    updated_at=summary.updated_at,
+                )
+
+                self._session.add(db_summary)
+
+            else:
+
+                existing_summary.summary = summary.summary
+                existing_summary.summarized_until_sequence = (
+                    summary.summarized_until_sequence
+                )
+                existing_summary.updated_at = summary.updated_at
+
+            await self._session.commit()

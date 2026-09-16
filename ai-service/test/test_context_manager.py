@@ -12,6 +12,9 @@ from app.infrastructure.database.database import AsyncSessionLocal
 from app.infrastructure.database.repositories.conversation_repository import (
     ConversationRepository,
 )
+from app.application.services.relevant_message_retriever import (
+    BasicRelevantMessageRetriever,
+)
 
 from app.domain.models.conversation_message import ConversationMessage
 
@@ -54,11 +57,15 @@ async def main():
 
         # Summarizer
         summarizer = ConversationSummarizer(llm)
-
+        relevant_message_retriever = BasicRelevantMessageRetriever(
+                repository
+            )
         # Create ContextManager
         context_manager = ContextManager(
             context_builder=context_builder,
             token_counter=token_counter,
+                relevant_message_retriever=relevant_message_retriever,
+
             repository=repository,
             summarizer=summarizer,
             max_context_tokens=100,

@@ -29,6 +29,13 @@ from app.api.dependencies.repository import (
 
 from app.infrastructure.tokenization.token_counter import TokenCounter
 from app.core.config.settings import get_settings
+from app.application.interfaces.relevant_message_retriever import (
+    RelevantMessageRetriever,
+)
+
+from app.api.dependencies.retrieval import (
+    get_hybrid_retriever,
+)
 
 
 def get_token_counter() -> TokenCounterInterface:
@@ -48,6 +55,9 @@ def get_context_manager(
     summarizer: ConversationSummarizerInterface = Depends(
         get_conversation_summarizer
     ),
+    relevant_message_retriever: RelevantMessageRetriever = Depends(
+    get_hybrid_retriever
+),
 ) -> ContextManagerInterface:
 
     settings = get_settings()
@@ -57,6 +67,10 @@ def get_context_manager(
         token_counter=token_counter,
         repository=repository,
         summarizer=summarizer,
+        relevant_message_retriever=relevant_message_retriever,
+
         max_context_tokens=settings.llm_context_window,
         max_output_tokens=settings.llm_max_output_tokens,
+        relevant_message_limit=settings.relevant_message_limit,
+
     )

@@ -16,7 +16,7 @@ from app.infrastructure.database.models.conversation_message import (
 from app.infrastructure.database.models.conversation_summary import (
     ConversationSummary,
 )
-
+from app.infrastructure.database.models.message_embedding import MessageEmbedding
 # ---------------------------------------------------------
 # Alembic Config
 # ---------------------------------------------------------

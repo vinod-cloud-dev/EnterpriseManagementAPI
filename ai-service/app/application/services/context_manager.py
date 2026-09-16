@@ -18,6 +18,9 @@ from app.application.interfaces.conversation_summarizer import (
 )
 from app.domain.models.conversation_message import ConversationMessage
 from app.domain.models.conversation_summary import ConversationSummary
+from app.application.interfaces.relevant_message_retriever import (
+    RelevantMessageRetriever,
+)
 
 class ContextManager(ContextManagerInterface):
 
@@ -27,15 +30,20 @@ class ContextManager(ContextManagerInterface):
         token_counter: TokenCounterInterface,
         repository: ConversationRepositoryInterface,
         summarizer: ConversationSummarizerInterface,
+        relevant_message_retriever: RelevantMessageRetriever,
         max_context_tokens: int,
         max_output_tokens: int,
+        relevant_message_limit: int,
     ) -> None:
         self._context_builder = context_builder
         self._token_counter = token_counter
         self._repository = repository
         self._summarizer = summarizer
+        self._relevant_message_retriever = relevant_message_retriever
         self._max_context_tokens = max_context_tokens
         self._max_output_tokens = max_output_tokens
+        self._relevant_message_limit = relevant_message_limit
+        
 
     async def build_context(
         self,
@@ -53,7 +61,7 @@ class ContextManager(ContextManagerInterface):
             - self._max_output_tokens
             - current_message_tokens
         )
-
+         # 1. Select recent messages first
         selected_history: list[ConversationMessage] = []
         used_tokens = 0
 
@@ -67,9 +75,71 @@ class ContextManager(ContextManagerInterface):
 
             selected_history.insert(0, message)
             used_tokens += message_tokens
+        # 2. Retrieve relevant messages
+        relevant_messages = await self._relevant_message_retriever.retrieve(
+            conversation_id=conversation_id,
+            query=current_message,
+               limit=self._relevant_message_limit,
 
+        )
+        
+    # 3. Remove duplicates
+    #    Recent history has priority
+    # ---------------------------------------------------------
+
+        recent_message_ids = {
+            message.id
+            for message in selected_history
+        }
+
+        deduplicated_relevant_messages = [
+            result
+            for result in relevant_messages
+            if result.message.id not in recent_message_ids
+        ]
+        
+        print("\n========== AFTER DEDUP ==========")
+
+        for result in deduplicated_relevant_messages:
+            print(
+                result.message.sequence_number,
+                result.message.id
+            )
+
+        print("=================================\n")
+            # 4. Allocate remaining token budget to relevant messages
+            # ---------------------------------------------------------
+
+        remaining_tokens = available_tokens - used_tokens
+
+        selected_relevant_messages = []
+
+        for result in deduplicated_relevant_messages:
+
+            message_tokens = self._token_counter.count_text(
+                result.message.content
+            )
+
+            if message_tokens > remaining_tokens:
+                continue
+
+            selected_relevant_messages.append(result)
+            remaining_tokens -= message_tokens
+            
+        print("\n========== DEDUP DEBUG ==========")
+
+        print("Recent message IDs:")
+        for message in selected_history:
+            print(message.id)
+
+        print("\nRelevant message IDs:")
+        for result in deduplicated_relevant_messages:
+            print(result.message.id)
+
+        print("=================================\n")
         summary = await self._repository.get_summary(
             conversation_id
+        
         )
 
         unsummarized_messages: list[ConversationMessage] = []
@@ -80,13 +150,19 @@ class ContextManager(ContextManagerInterface):
             else 0
         )
 
+        selected_history_ids = {
+            message.id
+            for message in selected_history
+        }
+
         for message in history:
             if (
                 message.sequence_number > summarized_until
-                and message not in selected_history
+                and message.id not in selected_history_ids
             ):
                 unsummarized_messages.append(message)
-
+                
+        # 6. Update summary if required
         if unsummarized_messages:
 
             existing_summary = (
@@ -125,4 +201,5 @@ class ContextManager(ContextManagerInterface):
             selected_history,
             current_message,
             summary.summary if summary else None,
+            selected_relevant_messages,
         )
